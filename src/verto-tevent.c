@@ -78,7 +78,7 @@ definecb(timer, struct timeval ct)
 definecb(signal, int signum, int count, void *siginfo)
 
 static void *
-tevent_ctx_add(void *ctx, const verto_ev *ev, char *persists)
+tevent_ctx_add(void *ctx, const verto_ev *ev, int *persists)
 {
     time_t interval;
     struct timeval tv;

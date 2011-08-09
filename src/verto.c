@@ -43,10 +43,6 @@
 
 #include <verto-module.h>
 
-typedef char bool;
-#define true ((bool) 1)
-#define false ((bool) 0)
-
 #ifdef WIN32
 #define pdlmsuffix ".dll"
 #define pdlmtype HMODULE
@@ -76,13 +72,13 @@ static char *pdlerror() {
     return amsg;
 }
 
-static bool
+static int
 pdlsymlinked(const char *modn, const char *symb) {
     return (GetProcAddress(GetModuleHandle(modn), symb) != NULL ||
             GetProcAddress(GetModuleHandle(NULL), symb) != NULL);
 }
 
-static bool
+static int
 pdladdrmodname(void *addr, char **buf) {
     MEMORY_BASIC_INFORMATION info;
     HMODULE mod;
@@ -112,7 +108,7 @@ pdladdrmodname(void *addr, char **buf) {
 #define pdlsym(mod, sym) dlsym(mod, sym)
 #define pdlerror() strdup(dlerror())
 
-static bool
+static int
 pdlsymlinked(const char* modn, const char* symb)
 {
     void* mod = dlopen(NULL, RTLD_LAZY | RTLD_LOCAL);
@@ -124,7 +120,7 @@ pdlsymlinked(const char* modn, const char* symb)
     return false;
 }
 
-static bool
+static int
 pdladdrmodname(void *addr, char **buf) {
     Dl_info dlinfo;
     if (!dladdr(addr, &dlinfo))
@@ -171,9 +167,9 @@ struct _verto_ev {
     void *priv;
     void *modpriv;
     verto_ev_flag flags;
-    bool persists;
+    int persists;
     size_t depth;
-    bool deleted;
+    int deleted;
     union {
         int fd;
         int signal;
@@ -211,8 +207,8 @@ _asprintf(char **strp, const char *fmt, ...) {
     return size;
 }
 
-static bool
-do_load_file(const char *filename, bool reqsym, pdlmtype *dll,
+static int
+do_load_file(const char *filename, int reqsym, pdlmtype *dll,
              const verto_module **module)
 {
     *dll = pdlopenl(filename);
@@ -247,9 +243,9 @@ do_load_file(const char *filename, bool reqsym, pdlmtype *dll,
         return false;
 }
 
-static bool
+static int
 do_load_dir(const char *dirname, const char *prefix, const char *suffix,
-            bool reqsym, pdlmtype *dll, const verto_module **module)
+            int reqsym, pdlmtype *dll, const verto_module **module)
 {
     *module = NULL;
     DIR *dir = opendir(dirname);
@@ -272,7 +268,7 @@ do_load_dir(const char *dirname, const char *prefix, const char *suffix,
         if (_asprintf(&tmp, "%s/%s", dirname, ent->d_name) < 0)
             continue;
 
-        bool success = do_load_file(tmp, reqsym, dll, module);
+        int success = do_load_file(tmp, reqsym, dll, module);
         free(tmp);
         if (success)
             break;
@@ -283,10 +279,10 @@ do_load_dir(const char *dirname, const char *prefix, const char *suffix,
     return module != NULL;
 }
 
-static bool
+static int
 load_module(const char *impl, pdlmtype *dll, const verto_module **module)
 {
-    bool success = false;
+    int success = false;
     char *prefix = NULL;
     char *suffix = NULL;
     char *tmp = NULL;

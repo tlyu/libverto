@@ -111,13 +111,13 @@ glib_callback_child(GPid pid, gint status, gpointer data)
 }
 
 static void *
-glib_ctx_add(void *ctx, const verto_ev *ev, char *persists)
+glib_ctx_add(void *ctx, const verto_ev *ev, int *persists)
 {
     glib_ev *gev = NULL;
     verto_ev_type type = verto_get_type(ev);
     verto_ev_flag flags = verto_get_flags(ev);
 
-    *persists = flags & VERTO_EV_FLAG_PERSIST;
+    *persists = !!(flags & VERTO_EV_FLAG_PERSIST);
 
     gev = g_new0(glib_ev, 1);
     if (!gev)

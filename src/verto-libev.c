@@ -73,7 +73,7 @@ libev_callback(EV_P_ ev_watcher *w, int revents)
     return type ## w
 
 static void *
-libev_ctx_add(void *ctx, const verto_ev *ev, char *persists)
+libev_ctx_add(void *ctx, const verto_ev *ev, int *persists)
 {
     ev_io *iow = NULL;
     ev_timer *timerw = NULL;

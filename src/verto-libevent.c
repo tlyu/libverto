@@ -68,7 +68,7 @@ libevent_callback(evutil_socket_t socket, short type, void *data)
 }
 
 static void *
-libevent_ctx_add(void *ctx, const verto_ev *ev, char *persists)
+libevent_ctx_add(void *ctx, const verto_ev *ev, int *persists)
 {
     struct event *priv = NULL;
     struct timeval *timeout = NULL;
@@ -76,7 +76,7 @@ libevent_ctx_add(void *ctx, const verto_ev *ev, char *persists)
     int flags = 0;
     verto_ev_flag evflags = verto_get_flags(ev);
 
-    *persists = evflags & VERTO_EV_FLAG_PERSIST;
+    *persists = !!(evflags & VERTO_EV_FLAG_PERSIST);
     if (*persists)
         flags |= EV_PERSIST;
 
