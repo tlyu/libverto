@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -67,6 +68,8 @@ do_test(verto_ctx *ctx)
     verto_ev *ev;
     exitstatus = 0;
     freed = 0;
+    int sockpair[2] = {-1, -1};
+    char buf[1] = "";
 
     if (!(verto_get_supported_types(ctx) & VERTO_EV_TYPE_CHILD)) {
         printf("WARNING: Child not supported!\n");
@@ -74,20 +77,29 @@ do_test(verto_ctx *ctx)
         return 0;
     }
 
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockpair)) {
+        printf("ERROR: socketpair() failed.\n");
+        verto_break(ctx);
+        return 1;
+    }
+
     pid = fork();
     if (pid < 0)
         return 1;
     else if (pid == 0) {
-        usleep(50000); /* 0.05 seconds */
+        write(sockpair[1], buf, 1);
+        read(sockpair[1], buf, 1);
         exit(EXITCODE);
     }
 
+    read(sockpair[0], buf, 1);
     /* Persist makes no sense for children events */
     assert(!verto_add_child(ctx, VERTO_EV_FLAG_PERSIST, cb, pid));
     assert(verto_add_timeout(ctx, VERTO_EV_FLAG_NONE, exit_cb, 100));
     ev = verto_add_child(ctx, VERTO_EV_FLAG_NONE, cb, pid);
     assert(ev);
     verto_set_private(ev, NULL, onfree);
+    write(sockpair[0], buf, 1);
 
     return 0;
 }
